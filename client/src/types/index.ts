@@ -1,5 +1,3 @@
-// types/types.ts
-
 export interface CanvasLine {
     points: Array<{
         x: number;
