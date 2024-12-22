@@ -5,6 +5,7 @@ import 'dotenv/config';
 import imageRoutes from './routes/imageRoutes';
 import { errorHandler } from './middleware/errorHandler';
 import path from 'path';
+import { upload } from './config/storage';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,7 +19,12 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+const isProduction = process.env.NODE_ENV === "production";
+const uploadPath = isProduction
+  ? '/opt/render/project/src/uploads'
+  : path.join(__dirname, '../uploads');
+
+app.use('/uploads', express.static(uploadPath));
 
 app.get("/", (req, res) => {
     res.json({

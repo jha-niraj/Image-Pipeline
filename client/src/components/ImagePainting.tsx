@@ -1,4 +1,4 @@
-import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
+import { useState, useRef, ChangeEvent } from 'react';
 // @ts-ignore
 import CanvasDraw from 'react-canvas-draw';
 import { generateMaskFromCanvas } from '../utils/maskUtils';
@@ -6,8 +6,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { X } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
+import { Link } from "react-router-dom";
 
-const ImageInpaintingApp: React.FC = () => {
+const ImagePaintingApp = () => {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [uploadedImageFileFormat, setUploadedImageFileFormat] = useState<File | null>(null);
     const [brushRadius, setBrushRadius] = useState<number>(12);
@@ -17,14 +18,10 @@ const ImageInpaintingApp: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const [uploadingOriginal, setUploadingOriginal] = useState<boolean>(false);
     const [uploadingMasked, setUploadingMasked] = useState<boolean>(false);
-    const [ originalId, setOriginalId ] = useState<string>("");
-
-    useEffect(() => {
-        const id = localStorage.getItem("originalid");
-        if(id) {
-            setOriginalId(id as string);
-        }
-    }, []);
+    // @ts-ignore
+    const [originalId, setOriginalId] = useState<string | null>(() => {
+        return localStorage.getItem("originalid");
+    });
 
     const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -49,7 +46,8 @@ const ImageInpaintingApp: React.FC = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-        localStorage.setItem("originalid", "");
+        localStorage.removeItem("originalid");
+        setOriginalId(null);
     };
     const handleClearCanvas = (): void => {
         if (canvasRef.current) {
@@ -71,14 +69,14 @@ const ImageInpaintingApp: React.FC = () => {
             }
         }
     };
-    const uploadImage = (dataUrl: string, filename: string): void => {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    // const uploadImage = (dataUrl: string, filename: string): void => {
+    //     const link = document.createElement('a');
+    //     link.href = dataUrl;
+    //     link.download = filename;
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     document.body.removeChild(link);
+    // };
     // Function to convert the maskImage string file to the actual file:
     const convertBase64ToFile = (dataUrl: string, fileName: string): File => {
         const base64Data = dataUrl.split(',')[1];
@@ -116,7 +114,9 @@ const ImageInpaintingApp: React.FC = () => {
                 return;
             }
             const data = await response.data;
-            localStorage.setItem("originalid", data?.imagePair?.id);
+            const newId = data?.imagePair?.id;
+            localStorage.setItem("originalid", newId);
+            setOriginalId(newId);
             toast.success(data.msg);
             setUploadingOriginal(false);
         } catch (err: any) {
@@ -127,6 +127,11 @@ const ImageInpaintingApp: React.FC = () => {
         }
     }
     const uploadMaskedImage = async () => {
+        console.log(originalId);
+        if (!originalId || originalId === "") {
+            toast.error("Please upload the original image first and then the masked image");
+            return;
+        }
         setUploadingMasked(true);
 
         try {
@@ -140,7 +145,7 @@ const ImageInpaintingApp: React.FC = () => {
             console.log("Masked file: ", maskedImageFile);
             maskFormData.append('image', maskedImageFile);
 
-            const response = await axios.post(`http://localhost:3000/api/images/${data?.imagePair?.id}/mask`, maskedImageFile, {
+            const response = await axios.post(`http://localhost:3000/api/images/${originalId}/mask`, maskFormData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -170,20 +175,36 @@ const ImageInpaintingApp: React.FC = () => {
             >
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h1 className="text-3xl font-bold text-center mb-3">Image Inpainting Tool</h1>
-                    <div className='flex border-2 w-full md:w-2/3 border-gray-400 p-1 rounded-2xl items-center justify-between mx-auto'>
-                        <input
-                            type="file"
-                            accept="image/jpeg,image/png"
-                            onChange={handleImageUpload}
-                            ref={fileInputRef}
-                            className="text-sm w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                        <button
-                            onClick={handleClear}
-                            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200"
-                        >
-                            <X className="h-5 w-5 text-gray-600" />
-                        </button>
+                    <div className="flex w-full items-center justify-between gap-4">
+                        <div className='flex border-2 w-full md:w-2/3 border-gray-400 p-1 rounded-2xl items-center justify-between mx-auto'>
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                onChange={handleImageUpload}
+                                ref={fileInputRef}
+                                className="text-sm w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            <button
+                                onClick={handleClear}
+                                className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200"
+                            >
+                                <X className="h-5 w-5 text-gray-600" />
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <Link 
+                                to="/imagepair"
+                                className={`px-4 py-2 bg-blue-500 rounded-2xl text-white transition-colors duration-200`}
+                            >
+                                Fetch Image Pair
+                            </Link>
+                            <Link 
+                                to="/allimagespair"
+                                className={`px-4 py-2 bg-green-500 rounded-2xl text-white transition-colors duration-200`}
+                            >
+                                Fetch All Image Pair
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </motion.div>
@@ -260,8 +281,8 @@ const ImageInpaintingApp: React.FC = () => {
                                         </div>
                                         <button
                                             onClick={uploadOriginalImage}
-                                            disabled={uploadingOriginal || !!originalId}
-                                            className={`px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 ${uploadingOriginal || !!!originalId ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            disabled={uploadingOriginal}
+                                            className={`px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors duration-200 ${uploadingOriginal ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {uploadingOriginal ? "Uploading..." : "Upload Original Image"}
                                         </button>
@@ -293,4 +314,4 @@ const ImageInpaintingApp: React.FC = () => {
     );
 };
 
-export default ImageInpaintingApp;
+export default ImagePaintingApp;

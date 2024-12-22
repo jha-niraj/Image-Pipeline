@@ -1,18 +1,23 @@
 import path from "path";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
+import fs from 'fs';
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        console.log('Request path:', req.path);
-        console.log('Request originalUrl:', req.originalUrl);
-
-        // Change the condition to check the full URL path
         const isOriginal = req.originalUrl.includes('/upload');
-        console.log('Is Original:', isOriginal);
+        const subfolder = isOriginal ? "originals" : "masks";
 
-        const uploadPath = path.join(__dirname, "../../uploads", isOriginal ? "originals" : "masks");
-        console.log('Upload path:', uploadPath);
+        // Determine base upload path based on environment
+        const baseUploadPath = process.env.NODE_ENV === 'production'
+            ? '/opt/render/project/src/uploads'
+            : path.join(__dirname, "../../uploads");
+
+        // Combine with subfolder
+        const uploadPath = path.join(baseUploadPath, subfolder);
+
+        // Ensure directory exists
+        fs.mkdirSync(uploadPath, { recursive: true });
 
         cb(null, uploadPath);
     },
@@ -37,4 +42,4 @@ export const upload = multer({
         fileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'),
     },
     fileFilter,
-})
+});

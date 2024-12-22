@@ -57,7 +57,7 @@ export const getImagePair = async (
             return;
         }
 
-        res.json(imagePair);
+        res.json({ msg: "Fetched the image with the particular id.", imagePair });
     } catch (error) {
         next(error);
     }
@@ -73,7 +73,7 @@ export const getAllImagePairs = async (
         const limit = Number(req.query.limit) || 10;
 
         const result = await ImageService.getAllImagePairs({ page, limit });
-        res.json(result);
+        res.json({ msg: "Fetched all the images with pairs", result });
     } catch (error) {
         next(error);
     }

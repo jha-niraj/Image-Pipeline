@@ -1,3 +1,6 @@
 node_modules
-# Keep environment variables out of version control
+dist
 .env
+uploads/*
+!uploads/masks/.gitkeep
+!uploads/originals/.gitkeep
