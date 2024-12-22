@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { BASE_URL } from "../config";
+import { BASE_URL, deployedUrl } from "../config";
 
 interface ImagePairDataProps {
     id: string;
@@ -11,13 +11,14 @@ interface ImagePairDataProps {
     updatedAt: Date;
 }
 const ImagePair = () => {
-    const [id, setId] = useState<string>("512d8251-cf49-4c03-832f-9365e00bdd39");
+    // @ts-ignore
+    const [id, setId] = useState<string>("e9c12762-5e20-4478-a90c-39c1fd27830e");
     const [imagePairData, setImagePairData] = useState<ImagePairDataProps | null>(null);
 
     useEffect(() => {
         const fetchImagePairData = async () => {
             try {
-                const response = await axios.get(`http://localhost:3000/api/images/${id}`);
+                const response = await axios.get(`${deployedUrl}/api/images/${id}`);
                 if (!response) {
                     toast.error("Failed to fetch the image pair data");
                     return;
@@ -32,8 +33,8 @@ const ImagePair = () => {
         fetchImagePairData();
     }, [id]);
 
-    const originalImagePath = `${BASE_URL}${imagePairData?.originalImagePath}`;
-    const maskImagePath = `${BASE_URL}${imagePairData?.maskImagePath}`;
+    const originalImagePath = `${deployedUrl}${imagePairData?.originalImagePath}`;
+    const maskImagePath = `${deployedUrl}${imagePairData?.maskImagePath}`;
 
     console.log(imagePairData);
     console.log(originalImagePath);

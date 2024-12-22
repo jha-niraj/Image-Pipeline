@@ -7,6 +7,7 @@ import { X } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Link } from "react-router-dom";
+import { deployedUrl } from '../config';
 
 const ImagePaintingApp = () => {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -104,7 +105,7 @@ const ImagePaintingApp = () => {
             }
             formData.append('image', uploadedImageFileFormat);
 
-            const response = await axios.post("http://localhost:3000/api/images/upload", formData, {
+            const response = await axios.post(`${deployedUrl}api/images/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -145,7 +146,7 @@ const ImagePaintingApp = () => {
             console.log("Masked file: ", maskedImageFile);
             maskFormData.append('image', maskedImageFile);
 
-            const response = await axios.post(`http://localhost:3000/api/images/${originalId}/mask`, maskFormData, {
+            const response = await axios.post(`${deployedUrl}api/images/${originalId}/mask`, maskFormData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
